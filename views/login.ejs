@@ -1,3 +1,6 @@
+<% for (let i=0; i<errors.length; i++) { %>
+  <li><%= errors[i] %></li>
+<% } %>
 <form action="login" method="POST">
   <input type="text" name="username" placeholder="username">
   <input type="password" name="password" placeholder="password">

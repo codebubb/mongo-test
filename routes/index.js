@@ -13,7 +13,8 @@ router.get('/secret', ensureAuthenticated, (req, res, next) => {
 });
 
 router.get('/login', (req, res, next) => {
-  res.render('login');
+  const  errors  = req.flash().error || [];
+  res.render('login', { errors });
 })
 
 router.get('/logout', (req, res, next) => {
@@ -23,8 +24,9 @@ router.get('/logout', (req, res, next) => {
 });
 
 router.post('/login', 
-  passport.authenticate('local', { failureRedirect: '/login' }),
+  passport.authenticate('local', { failureFlash: true, failureRedirect: '/login' }),
   (req, res, next) => {
+
     res.redirect('/secret');
   }
 );
