@@ -6,6 +6,7 @@ var logger = require('morgan');
 const MongoClient = require('mongodb').MongoClient;
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const ObjectID = require('mongodb').ObjectID;
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -14,37 +15,13 @@ var app = express();
 
 MongoClient.connect('mongodb://localhost:27017/test', (err, client) => {
   if (err) throw err;
-
   const db = client.db('test');
   const users = db.collection('users');
   app.locals.users = users; 
-})
-
-passport.use(new LocalStrategy(
-  (username, password, done) => {
-    app.locals.users
-      .findOne({ username })
-      .then((user) => {
-        if (!user) return done(null, false);
-        if (user.password !== password) { return done(null, false) }
-        return done(null, user);
-      })
-  }
-));
-
-passport.serializeUser(function(user, cb) {
-  cb(null, user._id);
 });
 
-passport.deserializeUser(function(id, cb) {
-  console.log('deserializing: ', id);
-  app.locals.users
-    .findOne({ _id: id })
-    .then(user => cb(null, user));
-});
 
-app.use(passport.initialize());
-app.use(passport.session());
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -56,6 +33,35 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(require('express-session')({ secret: 'keyboard cat', resave: false, saveUninitialized: false }));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LocalStrategy(
+  (username, password, done) => {
+    app.locals.users
+      .findOne({ username })
+      .then(user => {
+        if (!user) {
+          return done(null, false);
+        } 
+        if (user.password !== password) { 
+          return done(null, false);
+        } 
+        return done(null, user);
+        
+      })
+      .catch(done);
+  })
+);
+
+passport.serializeUser(function(user, done) {
+  done(null, user._id);
+});
+ 
+passport.deserializeUser(function(id, done) {
+  done(null, { id })
+});
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
